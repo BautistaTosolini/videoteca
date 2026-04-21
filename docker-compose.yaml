@@ -1,0 +1,119 @@
+services:
+  traefik:
+    image: traefik:v3.6.13
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - --api.dashboard=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --api.insecure=true
+      - --accesslog.filepath=/logs/access.log
+
+      # Entrypoints
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+
+      # Redirect HTTP → HTTPS
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+
+      # Let's Encrypt
+      - --certificatesresolvers.le.acme.email=bautistatosolini@gmail.com
+      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.le.acme.httpchallenge=true
+      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
+
+      # Cloudflare public IPs
+      - "--entrypoints.websecure.forwardedHeaders.trustedIPs=\
+        103.21.244.0/22,\
+        103.22.200.0/22,\
+        103.31.4.0/22,\
+        104.16.0.0/13,\
+        104.24.0.0/14,\
+        108.162.192.0/18,\
+        131.0.72.0/22,\
+        141.101.64.0/18,\
+        162.158.0.0/15,\
+        172.64.0.0/13,\
+        173.245.48.0/20,\
+        188.114.96.0/20,\
+        190.93.240.0/20,\
+        197.234.240.0/22,\
+        198.41.128.0/17"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8000:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/traefik/config/letsencrypt:/letsencrypt
+      - /etc/traefik/logs:/logs
+
+  jellyfin:
+    image: linuxserver/jellyfin:10.11.8
+    container_name: jellyfin
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jellyfin.rule=Host(`videoteca.cors4.com`)"
+      - "traefik.http.routers.jellyfin.entrypoints=websecure"
+      - "traefik.http.routers.jellyfin.tls.certresolver=le"
+      - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
+
+      # Cloudflare allowed IPs
+      - "traefik.http.middlewares.cloudflare-whitelist.ipallowlist.sourcerange=\
+        103.21.244.0/22,\
+        103.22.200.0/22,\
+        103.31.4.0/22,\
+        104.16.0.0/13,\
+        104.24.0.0/14,\
+        108.162.192.0/18,\
+        131.0.72.0/22,\
+        141.101.64.0/18,\
+        162.158.0.0/15,\
+        172.64.0.0/13,\
+        173.245.48.0/20,\
+        188.114.96.0/20,\
+        190.93.240.0/20,\
+        197.234.240.0/22,\
+        198.41.128.0/17"
+
+      - "traefik.http.routers.jellyfin.middlewares=cloudflare-whitelist@docker"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Cordoba
+    ports:
+      - "8096:8096"
+      - "8920:8920"
+      - "7359:7359/udp"
+      - "1900:1900/udp"
+    volumes:
+      - /etc/jellyfin/config:/config
+      - /data/movies:/data/movies
+
+  qbittorrent:
+    image: linuxserver/qbittorrent:5.1.4-libtorrentv1
+    container_name: qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Cordoba
+    ports:
+      - "8080:8080"
+      - "6881:6881"
+      - "6881:6881/udp"
+    volumes:
+      - /etc/qbittorrent/config:/config
+      - /data/movies:/downloads
+    restart: unless-stopped
+
+  cloudflare-ddns:
+    build: .
+    container_name: cloudflare-ddns
+    environment:
+      - ZONE_NAME=cors4.com
+      - RECORD_NAME=videoteca.cors4.com
+    env_file:
+      - .env
