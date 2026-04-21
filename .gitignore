@@ -1,4 +1,4 @@
 .env
-./movies
-./downloads
+movies/
+downloads/
 
