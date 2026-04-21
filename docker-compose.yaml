@@ -41,6 +41,10 @@ services:
         190.93.240.0/20,\
         197.234.240.0/22,\
         198.41.128.0/17"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Cordoba
     ports:
       - "80:80"
       - "443:443"
@@ -91,7 +95,7 @@ services:
       - "1900:1900/udp"
     volumes:
       - /etc/jellyfin/config:/config
-      - /data/movies:/data/movies
+      - /home/bianchi/videoteca/movies:/data/movies
 
   qbittorrent:
     image: linuxserver/qbittorrent:5.1.4-libtorrentv1
@@ -106,7 +110,7 @@ services:
       - "6881:6881/udp"
     volumes:
       - /etc/qbittorrent/config:/config
-      - /data/movies:/downloads
+      - /home/bianchi/videoteca/downloads:/downloads
     restart: unless-stopped
 
   cloudflare-ddns:
