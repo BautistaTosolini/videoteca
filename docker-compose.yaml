@@ -59,7 +59,24 @@ services:
       - "1900:1900/udp"
     volumes:
       - /etc/jellyfin/config:/config
-      - /home/bianchi/videoteca/movies:/data/movies
+      - /home/bianchi/videoteca/nas/movies:/data/movies
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.43.1
+    container_name: meilisearch
+    restart: unless-stopped
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: America/Argentina/Cordoba
+      MEILI_ENV: production
+      MEILI_NO_ANALYTICS: "true"
+    ports:
+       - 7700:7700
+    volumes:
+       -  /etc/meilisearch/config:/meili_data
+    env_file:
+      - .env
 
   qbittorrent:
     image: linuxserver/qbittorrent:5.1.4-libtorrentv1
@@ -74,12 +91,13 @@ services:
       - "6881:6881/udp"
     volumes:
       - /etc/qbittorrent/config:/config
-      - /home/bianchi/videoteca/downloads:/downloads
+      - /home/bianchi/videoteca/tmp/downloads:/downloads
     restart: unless-stopped
 
   cloudflare-ddns:
     build: .
     container_name: cloudflare-ddns
+    restart: unless-stopped
     environment:
       - ZONE_NAME=cors4.com
       - RECORD_NAME=cors4.com

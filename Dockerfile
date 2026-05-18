@@ -11,4 +11,4 @@ COPY cloudflare-ddns.sh ./cloudflare-ddns.sh
 RUN echo "*/5 * * * * root /app/cloudflare-ddns.sh >> /proc/1/fd/1 2>&1" > /etc/cron.d/ddns && \
     chmod 0644 /etc/cron.d/ddns
 
-CMD ["cron", "-f"]
+CMD printenv | grep -v "^no_proxy=" >> /etc/environment && cron -f

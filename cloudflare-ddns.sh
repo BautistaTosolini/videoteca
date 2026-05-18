@@ -9,14 +9,17 @@ log "Checking Cloudflare DNS"
 ZONE_ID=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=$ZONE_NAME" \
   -H "Authorization: Bearer $API_TOKEN" \
   -H "Content-Type: application/json" | jq -r '.result[0].id')
+log "ZONE_ID = $ZONE_ID"
 
 RECORD_ID=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records?name=$RECORD_NAME" \
   -H "Authorization: Bearer $API_TOKEN" \
   -H "Content-Type: application/json" | jq -r '.result[0].id')
+log "RECORD_ID = $RECORD_ID"
 
 CURRENT_IP=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records/$RECORD_ID" \
   -H "Authorization: Bearer $API_TOKEN" \
   -H "Content-Type: application/json" | jq -r '.result.content')
+log "CURRENT_IP = $CURRENT_IP"
 
 if [ "$IP" = "$CURRENT_IP" ]; then
   log "IP didn't change ($IP)"

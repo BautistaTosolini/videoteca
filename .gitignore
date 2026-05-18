@@ -1,4 +1,6 @@
 .env
 movies/
 downloads/
+nas/
+tmp/
 
