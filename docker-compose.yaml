@@ -58,8 +58,9 @@ services:
       - "7359:7359/udp"
       - "1900:1900/udp"
     volumes:
-      - /etc/jellyfin/config:/config
+      - /home/bianchi/videoteca/nas/config/jellyfin:/config
       - /home/bianchi/videoteca/nas/movies:/data/movies
+      - /home/bianchi/videoteca/tmp/preview:/data/previews
 
   meilisearch:
     image: getmeili/meilisearch:v1.43.1
@@ -74,7 +75,7 @@ services:
     ports:
        - 7700:7700
     volumes:
-       -  /etc/meilisearch/config:/meili_data
+       -  /home/bianchi/videoteca/nas/config/meilisearch:/meili_data
     env_file:
       - .env
 
@@ -90,7 +91,7 @@ services:
       - "6881:6881"
       - "6881:6881/udp"
     volumes:
-      - /etc/qbittorrent/config:/config
+      - /home/bianchi/videoteca/nas/config/qbittorrent:/config
       - /home/bianchi/videoteca/tmp/downloads:/downloads
     restart: unless-stopped
 
@@ -103,3 +104,15 @@ services:
       - RECORD_NAME=cors4.com
     env_file:
       - .env
+
+  code-server:
+    image: lscr.io/linuxserver/code-server:latest
+    container_name: code-server
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Cordoba
+    ports:
+      - "8443:8443"
+    volumes:
+      - /home/bianchi/videoteca:/videoteca
